@@ -3,7 +3,7 @@
   become: true
   vars:
     scap_content_file: /usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml
-    tailored_file: /tmp/Workshop.xml
+    tailored_file: /tmp/Workshop1.xml
     report_file: /tmp/openscap-tailored-report.html
     result_file: /tmp/openscap-tailored-results.xml
     local_report_dir: ./reports
