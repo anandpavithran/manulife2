@@ -3,7 +3,7 @@
   become: true
   vars:
     scap_content_file: /usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml
-    tailored_file: /tmp/Workshop1.xml
+    tailored_file: /tmp/Workshop2.xml
     report_file: /tmp/openscap-tailored-report.html
     result_file: /tmp/openscap-tailored-results.xml
     fix_file: /tmp/openscap-ansible.yml
@@ -32,7 +32,7 @@
 
     - name: Copy tailored profile file to target
       ansible.builtin.copy:
-        src: files/Workshop1.xml
+        src: files/Workshop2.xml
         dest: "{{ tailored_file }}"
         mode: '0644'
 
