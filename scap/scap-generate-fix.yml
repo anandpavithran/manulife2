@@ -49,7 +49,7 @@
       register: scan_output
       ignore_errors: yes
     - name: Generate Fix
-      ansible.builtin.command: >
+      ansible.builtin.shell: >
         oscap xccdf generate fix 
         --profile xccdf_org.ssgproject.content_profile_stig_custom1
         --tailoring-file {{ tailored_file }}
