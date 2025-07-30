@@ -40,10 +40,10 @@
       ansible.builtin.command: >
         oscap xccdf eval
         --tailoring-file {{ tailored_file }}
-        --profile xccdf_org.ssgproject.content_profile_stig_gui_CUSTOM
+        --profile xccdf_org.ssgproject.content_profile_stig_custom1
         --results {{ result_file }}
         --report {{ report_file }}
-        /usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml 2>/dev/null
+        "{{scap_content_file}}" 2>/dev/null
       async: 1800
       poll: 30  
       register: scan_output
@@ -76,6 +76,5 @@
         src: "{{ local_report_dir }}/"
         dest: /var/www/html/reports
         mode: '0644'
-      #delegate_to: localhost
 
 
