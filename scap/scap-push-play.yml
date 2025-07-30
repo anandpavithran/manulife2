@@ -1,5 +1,5 @@
-me: Fetch file from web server and push to GitHub securely
-  hosts: localhost
+- name: Fetch file from web server and push to GitHub securely
+  hosts: all
   gather_facts: no
   vars:
     file_url: "http://servera.lab.example.com/reports/openscap-ansible.yml"
