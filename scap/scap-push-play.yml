@@ -1,0 +1,64 @@
+me: Fetch file from web server and push to GitHub securely
+  hosts: localhost
+  gather_facts: no
+  vars:
+    file_url: "http://servera.lab.example.com/reports/openscap-ansible.yml"
+    download_dest: "/tmp/openscap-ansible.yml"
+    repo_url: "https://github.com/anandpavithran/myscap.git"
+    repo_dest: "/opt/github/my-repo"
+    git_branch: "main"
+    git_user: "anandpavithran"
+    git_email: "anandpavithran81@example.com"
+    commit_msg: "Automated commit: Added file from web server"
+
+  tasks:
+    - name: Ensure git is installed
+      ansible.builtin.package:
+        name: git
+        state: present
+
+    - name: Fetch file from web server
+      ansible.builtin.get_url:
+        url: "{{ file_url }}"
+        dest: "{{ download_dest }}"
+
+    - name: Clone repository (without credentials)
+      ansible.builtin.git:
+        repo: "{{ repo_url }}"
+        dest: "{{ repo_dest }}"
+        version: "{{ git_branch }}"
+        force: no
+
+    - name: Copy downloaded file into repo
+      ansible.builtin.copy:
+        src: "{{ download_dest }}"
+        dest: "{{ repo_dest }}/"
+        mode: '0644'
+
+    - name: Configure git username
+      ansible.builtin.command: git config user.name "{{ git_user }}"
+      args:
+        chdir: "{{ repo_dest }}"
+
+    - name: Configure git email
+      ansible.builtin.command: git config user.email "{{ git_email }}"
+      args:
+        chdir: "{{ repo_dest }}"
+
+    - name: Add changes
+      ansible.builtin.command: git add .
+      args:
+        chdir: "{{ repo_dest }}"
+
+    - name: Commit changes (skip if no changes)
+      ansible.builtin.shell: |
+        git diff --cached --quiet || git commit -m "{{ commit_msg }}"
+      args:
+        chdir: "{{ repo_dest }}"
+
+    - name: Push changes to GitHub (using stored credentials)
+      ansible.builtin.shell: |
+        git push https://{{ lookup('env','GITHUB_USER') }}:{{ lookup('env','GITHUB_TOKEN') }}@github.com/{{ git_user }}/<repo>.git {{ git_branch }}
+      args:
+        chdir: "{{ repo_dest }}"
+
