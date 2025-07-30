@@ -16,7 +16,6 @@
         name:
           - openscap-scanner
           - scap-security-guide
-          - git
           - httpd
         state: present
     - name:  start webserver
@@ -56,7 +55,8 @@
         --tailoring-file {{ tailored_file }}
         --fix-type ansible
         --result-id ""
-        {{ result_file }} > {{fix_file}}
+        "{{ result_file }}" 
+        > "{{fix_file}}"
       async: 1800
       poll: 30  
       register: scan_output
