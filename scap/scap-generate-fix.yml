@@ -39,7 +39,8 @@
         --results {{ result_file }}
         --report {{ report_file }}
         --skip-validation
-        {{scap_content_file}} 2>/dev/null
+        {{scap_content_file}} 
+        2>/dev/null
       async: 1800
       poll: 30  
       register: scan_output
