@@ -58,6 +58,7 @@
         src: "{{ report_file }}"
         dest: "{{ local_report_dir }}/"
         flat: yes
+      delegate_to: localhost  
 
     - name: Fetch XML scan result to control node
       ansible.builtin.fetch:
