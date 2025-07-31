@@ -47,12 +47,12 @@
       #ignore_errors: true
     - name: Wait for scan to finish
       wait_for:
-       path: {{ result_file }}
+       path: "{{ result_file }}"
        state: present
        timeout: 7200
     - name: Wait for scan to finish
       wait_for:
-       path: {{ report_file }}
+       path: "{{ report_file }}"
        state: present
        timeout: 7200
 
