@@ -4,17 +4,11 @@
   vars:
     scap_content_file: /usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml
     tailored_file: /tmp/Workshop2.xml
-    report_file: /tmp/test/openscap-tailored-report.html
-    result_file: /tmp/test/openscap-tailored-results.xml
-    fix_file: /tmp/test/openscap-ansible.yml
+    report_file: /tmp/openscap-tailored-report.html
+    result_file: /tmp/openscap-tailored-results.xml
+    fix_file: /tmp/openscap-ansible.yml
     local_report_dir: ./reports
-    repo_path: /tmp/test
-    branch_name: "main"
-    commit_message: "Automated commit via Ansible playbook"
-    git_username: "{{ lookup('env','GIT_USER') | default('') }}"
-    git_password: "{{ lookup('env','GIT_PASS') | default('') }}"
-    repo_url: "https://{{ git_username }}:{{ git_password }}@github.com/anandpavithran/myscap.git"
-
+    github_repo_path: /tmp/myscap  # Local clone of GitHub repo
 
   tasks:
     - name: Install required packages
@@ -22,8 +16,19 @@
         name:
           - openscap-scanner
           - scap-security-guide
-          - git
+          - httpd
         state: present
+    - name:  start webserver
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: yes
+    - name: Open firewall
+      ansible.posix.firewalld:
+        service: http
+        state: enabled
+        immediate: true
+        permanent: yes
 
     - name: Copy tailored profile file to target
       ansible.builtin.copy:
@@ -43,22 +48,6 @@
       poll: 30  
       register: scan_output
       ignore_errors: yes
-      delegate_to: localhost 
-    
-    - name: Fetch HTML scan report to control node
-      ansible.builtin.fetch:
-        src: "{{ report_file }}"
-        dest: "{{ local_report_dir }}/"
-        flat: yes
-      delegate_to: localhost 
-
-    - name: Fetch XML scan result to control node
-      ansible.builtin.fetch:
-        src: "{{ result_file }}"
-        dest: "{{ local_report_dir }}/"
-        flat: yes
-      delegate_to: localhost 
-    
     - name: Generate Fix
       ansible.builtin.shell: >
         oscap xccdf generate fix 
@@ -72,56 +61,38 @@
       poll: 30  
       register: scan_output
       ignore_errors: yes
-      delegate_to: localhost 
 
+    - name: Show scan results summary
+      ansible.builtin.debug:
+        msg: "{{ scan_output.stdout }}"
 
+    - name: Fetch HTML scan report to control node
+      ansible.builtin.fetch:
+        src: "{{ report_file }}"
+        dest: "{{ local_report_dir }}/"
+        flat: yes
+
+    - name: Fetch XML scan result to control node
+      ansible.builtin.fetch:
+        src: "{{ result_file }}"
+        dest: "{{ local_report_dir }}/"
+        flat: yes
     - name: Fetch YAML file to control node
       ansible.builtin.fetch:
         src: "{{ fix_file }}"
         dest: "{{ local_report_dir }}/"
         flat: yes
-      delegate_to: localhost 
-    
-    - name: Clone repository if not present (SSH auth)
-      ansible.builtin.git:
-        repo: "{{ repo_url }}"
-        dest: "{{ repo_path }}"
-        version: "{{ branch_name }}"
-        accept_hostkey: yes
-        update: yes
-      delegate_to: localhost 
+    - name: create file
+      ansible.builtin.file:
+        path: /var/www/html/reports
+        state: directory
+        owner: apache
+        group: apache
 
-    - name: Change to repo directory and pull latest changes
-      ansible.builtin.command: git pull
-      args:
-        chdir: "{{ repo_path }}"
-      delegate_to: localhost 
-    
     - name: Copy scan reports 
       ansible.builtin.copy:
         src: "{{ local_report_dir }}/"
-        dest: "{{repo_path}}"
+        dest: /var/www/html/reports
         mode: '0644'
-      delegate_to: localhost 
-
-    - name: Add all changes to git
-      ansible.builtin.command: git add .
-      args:
-        chdir: "{{ repo_path }}"
-      delegate_to: localhost 
-
-    - name: Commit changes
-      ansible.builtin.command: git commit -m "{{ commit_message }}"
-      args:
-        chdir: "{{ repo_path }}"
-      register: git_commit
-      delegate_to: localhost 
-      #failed_when: git_commit.rc != 0 and "'nothing to commit'" not in git_commit.stderr
-
-    - name: Push changes to remote repository
-      ansible.builtin.command: git push
-      args:
-        chdir: "{{ repo_path }}"   
-      delegate_to: localhost 
 
 
