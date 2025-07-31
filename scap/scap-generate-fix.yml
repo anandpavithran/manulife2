@@ -4,9 +4,9 @@
   vars:
     scap_content_file: /usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml
     tailored_file: /tmp/Workshop2.xml
-    report_file: /tmp/test/openscap-tailored-report.html
-    result_file: /tmp/test/openscap-tailored-results.xml
-    fix_file: /tmp/test/openscap-ansible.yml
+    report_file: /tmp/openscap-tailored-report.html
+    result_file: /tmp/openscap-tailored-results.xml
+    fix_file: /tmp/openscap-ansible.yml
     local_report_dir: ./reports
     repo_path: /tmp/test
     branch_name: "main"
