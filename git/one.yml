@@ -22,6 +22,10 @@
         version: "{{ branch_name }}"
         accept_hostkey: yes
         update: yes
+    - name: Copy file
+      ansible.builtin.copy:
+        content: "Hello World"
+        dest: "{{repo_path}}"    
 
     - name: Change to repo directory and pull latest changes
       ansible.builtin.command: git pull
