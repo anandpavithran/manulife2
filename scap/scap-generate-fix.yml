@@ -9,7 +9,6 @@
     fix_file: /tmp/test/openscap-ansible.yml
     local_report_dir: ./reports
     repo_path: /tmp/test
-    commit_message: "Automated commit from Ansible playbook"
     branch_name: "main"
     commit_message: "Automated commit via Ansible playbook"
     git_username: "{{ lookup('env','GIT_USER') | default('') }}"
@@ -44,6 +43,18 @@
       poll: 30  
       register: scan_output
       ignore_errors: yes
+    - name: Fetch HTML scan report to control node
+      ansible.builtin.fetch:
+        src: "{{ report_file }}"
+        dest: "{{ local_report_dir }}/"
+        flat: yes
+
+    - name: Fetch XML scan result to control node
+      ansible.builtin.fetch:
+        src: "{{ result_file }}"
+        dest: "{{ local_report_dir }}/"
+        flat: yes
+    
     - name: Generate Fix
       ansible.builtin.shell: >
         oscap xccdf generate fix 
@@ -58,21 +69,7 @@
       register: scan_output
       ignore_errors: yes
 
-    - name: Show scan results summary
-      ansible.builtin.debug:
-        msg: "{{ scan_output.stdout }}"
 
-    - name: Fetch HTML scan report to control node
-      ansible.builtin.fetch:
-        src: "{{ report_file }}"
-        dest: "{{ local_report_dir }}/"
-        flat: yes
-
-    - name: Fetch XML scan result to control node
-      ansible.builtin.fetch:
-        src: "{{ result_file }}"
-        dest: "{{ local_report_dir }}/"
-        flat: yes
     - name: Fetch YAML file to control node
       ansible.builtin.fetch:
         src: "{{ fix_file }}"
