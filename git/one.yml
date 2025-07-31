@@ -25,7 +25,7 @@
     - name: Copy file
       ansible.builtin.copy:
         content: "Hello World"
-        dest: "{{repo_path}}"/sample.txt    
+        dest: {{repo_path}}/sample.txt    
 
     - name: Change to repo directory and pull latest changes
       ansible.builtin.command: git pull
