@@ -3,12 +3,18 @@
   become: true
   vars:
     scap_content_file: /usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml
-    tailored_file: /tmp/Workshop2.xml
-    report_file: /tmp/openscap-tailored-report.html
-    result_file: /tmp/openscap-tailored-results.xml
-    fix_file: /tmp/openscap-ansible.yml
+    tailored_file: /tmp/Workshop1.xml
+    report_file: /tmp/test/openscap-tailored-report.html
+    result_file: /tmp/test/openscap-tailored-results.xml
+    fix_file: /tmp/test/openscap-ansible.yml
     local_report_dir: ./reports
-    github_repo_path: /tmp/myscap  # Local clone of GitHub repo
+    repo_path: /tmp/test
+    branch_name: "main"
+    commit_message: "Automated commit via Ansible playbook"
+    git_username: "{{ lookup('env','GIT_USER') | default('') }}"
+    git_password: "{{ lookup('env','GIT_PASS') | default('') }}"
+    repo_url: "https://{{ git_username }}:{{ git_password }}@github.com/anandpavithran/myscap.git"
+
 
   tasks:
     - name: Install required packages
@@ -16,38 +22,40 @@
         name:
           - openscap-scanner
           - scap-security-guide
-          - httpd
+          - git
         state: present
-    - name:  start webserver
-      ansible.builtin.service:
-        name: httpd
-        state: started
-        enabled: yes
-    - name: Open firewall
-      ansible.posix.firewalld:
-        service: http
-        state: enabled
-        immediate: true
-        permanent: yes
 
     - name: Copy tailored profile file to target
       ansible.builtin.copy:
-        src: files/Workshop2.xml
+        src: files/Workshop1.xml
         dest: "{{ tailored_file }}"
         mode: '0644'
 
     - name: Run OpenSCAP scan with tailored file
-      ansible.builtin.command: >
+      ansible.builtin.shell: >
         oscap xccdf eval
         --tailoring-file {{ tailored_file }}
         --profile xccdf_org.ssgproject.content_profile_stig_custom1
         --results {{ result_file }}
         --report {{ report_file }}
-        "{{scap_content_file}}" 2>/dev/null
+        {{scap_content_file}} 2>/dev/null
       async: 1800
       poll: 30  
       register: scan_output
       ignore_errors: yes
+    
+    - name: Fetch HTML scan report to control node
+      ansible.builtin.fetch:
+        src: "{{ report_file }}"
+        dest: "{{ local_report_dir }}/"
+        flat: yes
+
+    - name: Fetch XML scan result to control node
+      ansible.builtin.fetch:
+        src: "{{ result_file }}"
+        dest: "{{ local_report_dir }}/"
+        flat: yes
+    
     - name: Generate Fix
       ansible.builtin.shell: >
         oscap xccdf generate fix 
@@ -62,37 +70,47 @@
       register: scan_output
       ignore_errors: yes
 
-    - name: Show scan results summary
-      ansible.builtin.debug:
-        msg: "{{ scan_output.stdout }}"
 
-    - name: Fetch HTML scan report to control node
-      ansible.builtin.fetch:
-        src: "{{ report_file }}"
-        dest: "{{ local_report_dir }}/"
-        flat: yes
-
-    - name: Fetch XML scan result to control node
-      ansible.builtin.fetch:
-        src: "{{ result_file }}"
-        dest: "{{ local_report_dir }}/"
-        flat: yes
     - name: Fetch YAML file to control node
       ansible.builtin.fetch:
         src: "{{ fix_file }}"
         dest: "{{ local_report_dir }}/"
         flat: yes
-    - name: create file
-      ansible.builtin.file:
-        path: /var/www/html/reports
-        state: directory
-        owner: apache
-        group: apache
+    
+    - name: Clone repository if not present (SSH auth)
+      ansible.builtin.git:
+        repo: "{{ repo_url }}"
+        dest: "{{ repo_path }}"
+        version: "{{ branch_name }}"
+        accept_hostkey: yes
+        update: yes
 
+    - name: Change to repo directory and pull latest changes
+      ansible.builtin.command: git pull
+      args:
+        chdir: "{{ repo_path }}"
+    
     - name: Copy scan reports 
       ansible.builtin.copy:
         src: "{{ local_report_dir }}/"
-        dest: /var/www/html/reports
+        dest: "{{repo_path}}"
         mode: '0644'
+
+    - name: Add all changes to git
+      ansible.builtin.command: git add .
+      args:
+        chdir: "{{ repo_path }}"
+
+    - name: Commit changes
+      ansible.builtin.command: git commit -m "{{ commit_message }}"
+      args:
+        chdir: "{{ repo_path }}"
+      register: git_commit
+      #failed_when: git_commit.rc != 0 and "'nothing to commit'" not in git_commit.stderr
+
+    - name: Push changes to remote repository
+      ansible.builtin.command: git push
+      args:
+        chdir: "{{ repo_path }}"   
 
 
