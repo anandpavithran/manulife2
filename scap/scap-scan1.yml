@@ -37,7 +37,7 @@
         mode: '0644'
 
     - name: Run OpenSCAP scan with tailored file
-      ansible.builtin.command: >
+      ansible.builtin.shell: >
         oscap xccdf eval
         --tailoring-file {{ tailored_file }}
         --profile xccdf_org.ssgproject.content_profile_stig_custom1
