@@ -7,7 +7,6 @@
     report_file: /tmp/openscap-tailored-report.html
     result_file: /tmp/openscap-tailored-results.xml
     local_report_dir: ./reports
-    github_repo_path: /tmp/myscap  # Local clone of GitHub repo
 
   tasks:
     - name: Install required packages
@@ -43,8 +42,7 @@
         --profile xccdf_org.ssgproject.content_profile_stig_custom1
         --results {{ result_file }}
         --report {{ report_file }}
-        --fetch-remote-resources
-        "{{scap_content_file}}" 2>/dev/null
+        {{scap_content_file}} 2>/dev/null
       async: 1800
       poll: 30  
       register: scan_output
