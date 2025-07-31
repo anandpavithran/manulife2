@@ -38,6 +38,7 @@
         --profile xccdf_org.ssgproject.content_profile_stig_custom1
         --results {{ result_file }}
         --report {{ report_file }}
+        --skip-validation
         {{scap_content_file}} 2>/dev/null
       async: 1800
       poll: 30  
