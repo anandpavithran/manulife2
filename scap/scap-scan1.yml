@@ -43,6 +43,7 @@
         --profile xccdf_org.ssgproject.content_profile_stig_custom1
         --results {{ result_file }}
         --report {{ report_file }}
+        --fetch-remote-resources
         "{{scap_content_file}}" 2>/dev/null
       async: 1800
       poll: 30  
@@ -58,7 +59,6 @@
         src: "{{ report_file }}"
         dest: "{{ local_report_dir }}/"
         flat: yes
-      delegate_to: localhost  
 
     - name: Fetch XML scan result to control node
       ansible.builtin.fetch:
