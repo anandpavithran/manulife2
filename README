@@ -1,0 +1,9 @@
+STEPS TO EXECUTE PLAYBOOKS IN SCAP DIRECTORY
+1] Create inventory,credentials,project,template in Ansible Controller
+2] Set two vaibles in template
+      git_username -------> "your github username"
+      git_password -------->" your git token"
+3]Once executed  check in the repository given below
+  
+   https://github.com/anandpavithran/manulife2/new/main
+Modify the above link based on your github repository.Update in playbook as well.
