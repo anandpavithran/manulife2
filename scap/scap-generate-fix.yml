@@ -4,9 +4,9 @@
   vars:
     scap_content_file: /usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml
     tailored_file: /tmp/Workshop1.xml
-    report_file: /tmp/test/openscap-tailored-report.html
-    result_file: /tmp/test/openscap-tailored-results.xml
-    fix_file: /tmp/test/openscap-ansible.yml
+    report_file: /tmp/openscap-tailored-report.html
+    result_file: /tmp/openscap-tailored-results.xml
+    fix_file: /tmp/openscap-ansible.yml
     local_report_dir: ./reports
     repo_path: /tmp/test
     branch_name: "main"
@@ -32,29 +32,18 @@
         mode: '0644'
 
     - name: Run OpenSCAP scan with tailored file
-      ansible.builtin.shell: >
+      ansible.builtin.command: >
         oscap xccdf eval
         --tailoring-file {{ tailored_file }}
         --profile xccdf_org.ssgproject.content_profile_stig_custom1
         --results {{ result_file }}
         --report {{ report_file }}
-        --skip-validation
         {{scap_content_file}} 
-        2>/dev/null
-      async: 0
-      poll: 0  
+      no_log: true
+      #async: 1800
+      #poll: 30
       register: scan_output
-      #ignore_errors: true
-    - name: Wait for scan to finish
-      wait_for:
-       path: "{{ result_file }}"
-       state: present
-       timeout: 7200
-    - name: Wait for scan to finish
-      wait_for:
-       path: "{{ report_file }}"
-       state: present
-       timeout: 7200
+      ignore_errors: yes
 
     
     - name: Fetch HTML scan report to control node
@@ -80,8 +69,6 @@
         > "{{fix_file}}"
       async: 1800
       poll: 30  
-      register: scan_output
-      ignore_errors: yes
 
 
     - name: Fetch YAML file to control node
